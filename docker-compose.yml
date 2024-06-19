@@ -1,0 +1,44 @@
+version: "3.9"
+
+services:
+  app:
+    image: 'jc21/nginx-proxy-manager:latest'
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '81:81'
+      - '443:443'
+    volumes:
+      - ./data:/data
+      - ./letsencrypt:/etc/letsencrypt
+
+  db:
+    image: mysql:5.7
+    env_file: .env
+    volumes:
+      - db_data:/var/lib/mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+
+  prestashop:
+    depends_on:
+      - db
+    image: prestashop/prestashop:latest
+    env_file: .env
+    ports:
+      - "8000:80"
+    restart: always
+    volumes:
+      - ./prestashop_data:/var/www/html
+    environment:
+      DB_SERVER: db
+      DB_NAME: ${MYSQL_DATABASE}
+      DB_USER: ${MYSQL_USER}
+      DB_PASSWORD: ${MYSQL_PASSWORD}
+volumes:
+  db_data: {}
+  prestashop_data: {}
